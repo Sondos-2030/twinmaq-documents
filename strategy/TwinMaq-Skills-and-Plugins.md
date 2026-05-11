@@ -208,6 +208,170 @@
 
 ---
 
+## 📋 Document Generation Standard — MANDATORY FOR ALL DOCUMENTS
+
+> **This standard applies to every proposal, strategy, brochure, and report produced for TwinMaq. No exceptions. Always apply all rules below before delivering any document.**
+
+### Rule 1 — Always Use Puppeteer for PDF Output
+- ALL client-facing PDFs **must** be generated via Puppeteer + system Chrome (not Word's Save-as-PDF)
+- Generator script: `C:\temp\xlsxreader\generatePDFs.js`
+- This ensures: pixel-perfect colors, correct `@media print` CSS, proper page breaks, crisp typography
+- Never use Word COM to produce the final PDF — Word COM is for DOCX editability only
+
+### Rule 2 — Dual Pipeline for Every Document
+Every document must produce **two outputs from the same HTML source:**
+1. **PDF** — via Puppeteer (`generatePDFs.js`) → client presentation copy
+2. **DOCX** — via Word COM PowerShell `SaveAs format 16` → editable reference copy
+
+### Rule 3 — Professional Page Flow (No Forced Section Breaks)
+- **NEVER** add `page-break-before: always` to every section — this creates a title-per-page layout that is unprofessional
+- **Only these elements get a hard break:**
+  - Cover page: `page-break-after: always`
+  - Table of Contents page: `page-break-after: always`
+  - Maximum 2–3 selective breaks in long documents (only before the longest content blocks)
+- Let Chrome's print engine flow content naturally — it handles orphans and widows correctly
+- Use `div.fb { page-break-inside: avoid }` on every heading+first-paragraph block
+
+### Rule 4 — CSS Paged Media Rules (Puppeteer-Compatible)
+All `@media print` styles must be inside a proper `@media print { }` block:
+```css
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  div.fb { page-break-inside: avoid; }
+  table.T { page-break-inside: avoid; }
+  p { orphans: 3; widows: 3; }
+  .cover-page { page-break-after: always; }
+  .toc-page { page-break-after: always; }
+  .pb-before { page-break-before: always; }
+}
+```
+- Do NOT use MSO-specific CSS (`mso-footer`, `@page Section1`) in Puppeteer documents
+
+### Rule 5 — Typography & Density Standards
+| Property | Value | Reason |
+|----------|-------|--------|
+| Font | Segoe UI / system-sans | Renders cleanly on all Windows systems |
+| Base font size | 10pt | Dense, professional — not wasteful |
+| Line height | 1.55 | Readable without excessive whitespace |
+| Margins | 2.2 cm (top/left/right), 2.5 cm (bottom) | A4 standard, matches Puppeteer PDF settings |
+| Footer | Page X of Y + company URL | Always enabled in `generatePDFs.js` |
+| Colors | Exact (printBackground: true) | Brand colors must print accurately |
+
+### Rule 6 — Brand Consistency in Every Document
+- TwinMaq logo must appear on the cover page
+- Design Zone brand colors from `Brand Assets Folder/DZ-2025-Brand Guidline-v2 1.pdf`
+- Footer must include: `TwinMaq | Design Zone Engineering Solutions | www.designzone.com.sa`
+- Confidentiality notice on financial proposals
+
+### Rule 7 — GitHub Upload After Every Major Revision
+After generating any new document version:
+1. Upload DOCX to `Sondos-2030/twinmaq-documents` (appropriate subfolder)
+2. Use Node.js https module upload scripts in `C:\temp\`
+3. Update commit message with version note and key changes
+
+---
+
+---
+
+## 📣 Marketing & Sales Team Setup — Execution Stack
+
+> **Purpose:** These are the tools, repositories, and workflows needed to immediately begin sales execution after the strategy document is finalized. Each tool maps directly to a step in the TwinMaq 90-Day Go-to-Market Plan.**
+
+### Phase 1 — Lead Management & CRM (Start Week 1)
+
+| Tool | GitHub Repo | Role in TwinMaq Execution |
+|------|------------|--------------------------|
+| **Twenty CRM** | [twentyhq/twenty](https://github.com/twentyhq/twenty) | Primary CRM — track all 45 leads from outreach list, stages: Cold → Contacted → Demo → Proposal → Closed |
+| **Frappe CRM** | [frappe/crm](https://github.com/frappe/crm) | Alternative CRM if self-hosted needed — full pipeline + email integration |
+| **Relaticle** | [relaticle/relaticle](https://github.com/relaticle/relaticle) | AI-native CRM with 30 MCP tools — connect directly to Claude Code for AI-assisted follow-ups |
+| **OpenOutreach** | [eracle/OpenOutreach](https://github.com/eracle/OpenOutreach) | AI LinkedIn automation — define target (real estate developers KSA) → AI finds leads + sends personalized connection requests |
+
+**Immediate action:** Import `Data/TwinMaq-Outreach-List-Cleaned.xlsx` (45 leads, scored) into chosen CRM. Assign stages based on Score column (🔴 Hot → Demo first, 🟠 Warm → Email sequence, 🟡 Cool → Long nurture).
+
+---
+
+### Phase 2 — Email Outreach Automation (Start Week 1–2)
+
+| Tool | GitHub Repo | Role in TwinMaq Execution |
+|------|------------|--------------------------|
+| **Mautic** | [mautic/mautic](https://github.com/mautic/mautic) | Full marketing automation: email sequences, drip campaigns, lead scoring, open/click tracking |
+| **Listmonk** | [listmonk/listmonk](https://github.com/listmonk/listmonk) | Lightweight self-hosted email newsletter + transactional emails (simpler than Mautic for outreach blasts) |
+| **n8n** | [n8n-io/n8n](https://github.com/n8n-io/n8n) | Workflow automation: CRM → Email trigger → WhatsApp → Follow-up — connects all tools together |
+
+**Sequence mapped to TwinMaq strategy:**
+1. Day 1: Cold email (Arabic intro + TwinMaq 60-second demo link)
+2. Day 4: Follow-up (add value — competitor comparison snippet)
+3. Day 8: WhatsApp message (brief, personal, link to case study)
+4. Day 14: Final email (special offer or demo invitation)
+5. Day 21: Archive or re-queue for next quarter
+
+---
+
+### Phase 3 — WhatsApp Business (Start Week 2)
+
+| Tool | GitHub Repo | Role in TwinMaq Execution |
+|------|------------|--------------------------|
+| **whatsapp-web.js** | [pedroslopez/whatsapp-web.js](https://github.com/pedroslopez/whatsapp-web.js) | Node.js WhatsApp client — send personalized outreach messages to Saudi developers via WhatsApp Web |
+| **Chatwoot** | [chatwoot/chatwoot](https://github.com/chatwoot/chatwoot) | Unified inbox: WhatsApp + Email + live chat in one dashboard — route inbound leads to sales rep |
+| **n8n** | [n8n-io/n8n](https://github.com/n8n-io/n8n) | Orchestrate WhatsApp sequences as part of multi-channel outreach workflow |
+
+**MENA note:** WhatsApp is the dominant B2B communication channel in Saudi Arabia. Every cold email sequence must have a parallel WhatsApp touchpoint. Use whatsapp-web.js for programmatic sending; Chatwoot for managing inbound replies.
+
+---
+
+### Phase 4 — Analytics & Performance Tracking (Start Week 2–3)
+
+| Tool | GitHub Repo | Role in TwinMaq Execution |
+|------|------------|--------------------------|
+| **Plausible Analytics** | [plausible/analytics](https://github.com/plausible/analytics) | Privacy-friendly website analytics — track TwinMaq demo page visits, source attribution, conversion paths |
+| **PostHog** | [posthog/posthog](https://github.com/posthog/posthog) | Product analytics + session recording — understand how prospects interact with TwinMaq platform demo |
+| **Metabase** | [metabase/metabase](https://github.com/metabase/metabase) | Business intelligence dashboard — visualize outreach KPIs, pipeline stages, revenue forecast |
+
+**KPIs to track from Week 1:**
+- Email open rate (target: >35% in Arabic market)
+- Reply rate (target: >8%)
+- Demo booking rate (target: >3% of total outreach)
+- Proposal-to-close rate (target: >25%)
+- Monthly pipeline value (SAR)
+
+---
+
+### Phase 5 — Project & Task Management for Sales Team (Start Week 1)
+
+| Tool | GitHub Repo | Role in TwinMaq Execution |
+|------|------------|--------------------------|
+| **Plane** | [makeplane/plane](https://github.com/makeplane/plane) | Open-source Linear/Jira alternative — manage outreach campaigns, proposal tasks, client delivery milestones |
+| **Huly** | [hcengineering/platform](https://github.com/hcengineering/platform) | All-in-one: project management + team collaboration + HR — replaces Notion/Linear/Slack for small team |
+| **GitHub Issues** | Already configured via MCP | Track proposal drafts, campaign milestones, competitor updates in `Sondos-2030/twinmaq-documents` |
+
+---
+
+### Marketing & Sales Execution — Immediate Action Checklist
+
+**Week 1 (Days 1–7):**
+- [ ] Set up CRM (Twenty or Frappe) — import 45 leads from Excel CRM file
+- [ ] Assign 🔴 Hot leads (10) to direct outreach — email + WhatsApp same day
+- [ ] Deploy Mautic or Listmonk email server
+- [ ] Configure n8n workflow: CRM stage change → trigger email sequence
+- [ ] Create WhatsApp Business profile for TwinMaq / Design Zone KSA number
+- [ ] Set up Plausible on TwinMaq demo landing page
+
+**Week 2–3 (Days 8–21):**
+- [ ] Send Batch 1: Top 10 Hot leads — personalized proposals + demo call invitation
+- [ ] Send Batch 2: 16 Warm leads — email sequence via Mautic
+- [ ] Post first LinkedIn content — TwinMaq vs. Vancore comparison (no brand names, feature-led)
+- [ ] Set up Chatwoot for unified inbox — all inbound messages in one place
+- [ ] Track open/click rates; adjust subject lines for Arabic market
+
+**Week 4 (Day 22–30):**
+- [ ] Follow up all Batch 1 + 2 leads — WhatsApp touchpoint
+- [ ] Book minimum 3 demo calls from Hot leads
+- [ ] Generate first custom proposals for demo-booked leads
+- [ ] Review analytics — identify best-performing email subject lines and WhatsApp message formats
+
+---
+
 ## 🔌 Recommended Plugins & Tools
 
 ### For Claude Code (AI Skills)
